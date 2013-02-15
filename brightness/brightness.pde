@@ -1,3 +1,10 @@
+/*
+Brightness
+This demo uses TUIO-based rotation gesture to increase 
+and decrease brightness on an image. 
+Shows a histogram overlay while adjusting. 
+*/
+
 import oscP5.*;
 import netP5.*;
 import tuioZones.*;
@@ -17,7 +24,7 @@ void setup() {
   zones.setZone("image", 0,0,640,573);
   zones.setZone("gesture", 0,0,width,height);
   zones.setZoneParameter("image","DRAGGABLE",true);
-  //zones.setZoneParameter("image","THROWABLE",true);
+  zones.setZoneParameter("image","THROWABLE",true);
   zones.setZoneParameter("image","SCALABLE",true);
   img = loadImage("butterfly.jpg");
   
@@ -28,7 +35,7 @@ void setup() {
   
 }
 
-void drawHistogram (PImage img) {
+void drawHistogram (PImage img, color histColor) {
   int[] hist = new int[256];
 
   // Calculate the histogram
@@ -94,7 +101,7 @@ void draw(){
   // outline photo when pressed
   if (zones.isZonePressed("gesture")) {
     
-    drawHistogram(img);
+    drawHistogram(img, histColor);
     
     //stroke(200,200,0);
     //strokeWeight(4);
