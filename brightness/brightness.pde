@@ -68,25 +68,41 @@ void brightness(PImage img, float change) {
   for (int x = 0; x < img.width; x++) {
     for (int y = 0; y < img.height; y++ ) {
       // Calculate the 1D pixel location
-      int loc = x + y*img.width;
+      int i = x + y*img.width;
       // Get the R,G,B values from image
-      float r = red   (img.pixels[loc]);
-      float g = green (img.pixels[loc]);
-      float b = blue  (img.pixels[loc]);
+      //int r = (int) red(img.pixels[i]);
+      //int g = (int) green(img.pixels[i]);
+      //int b = (int) blue(img.pixels[i]);
+       
+      // Much faster RGB values (uses bit-shifting)
+      int r = (img.pixels[i] >> 16) & 0xFF; //like calling the function red(), but faster
+      int g = (img.pixels[i] >> 8) & 0xFF;
+      int b = img.pixels[i] & 0xFF; 
       
       
       r *= 1 + change*k;
       g *= 1 + change*k;
       b *= 1 + change*k;
-      if (x == 0 && y == 0) println("rgb: "+r+", "+g+", "+b);
-      // Constrain RGB to between 0-255
-      r = constrain(r,0,255);
-      g = constrain(g,0,255);
-      b = constrain(b,0,255);
-      // Make a new color and set pixel in the window
-      color c = color(r,g,b);
-      img.pixels[loc] = c;
+      //if (x == 0 && y == 0) println("rgb: "+r+", "+g+", "+b);
       
+      // Constrain RGB to between 0-255
+      //r = constrain(r,0,255);
+      //g = constrain(g,0,255);
+      //b = constrain(b,0,255);
+      
+      // faster
+      r = r < 0 ? 0 : r > 255 ? 255 : r;
+      g = g < 0 ? 0 : g > 255 ? 255 : g;
+      b = b < 0 ? 0 : b > 255 ? 255 : b;
+      
+      
+      // Make a new color and set pixel in the window
+      
+      //color c = color(r,g,b);
+      //img.pixels[i] = c;
+      
+      // bitshift'd
+      img.pixels[i]= 0xff000000 | (r << 16) | (g << 8) | b;
     }
   }
   img.updatePixels();
