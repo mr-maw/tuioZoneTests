@@ -1,7 +1,7 @@
 tuioZoneTests
 =============
 
-Brightness
+BrightnessAndContrast
 ---------------------
 This demo uses TUIO-based rotation gesture to increase 
 and decrease brightness or contrast on an image. 
