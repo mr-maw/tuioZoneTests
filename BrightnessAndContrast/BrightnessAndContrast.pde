@@ -3,8 +3,8 @@ Brightness & Contrast
 
 This demo uses TUIO-based rotation gesture to increase 
 and decrease brightness or contrast on an image. 
-The mode can be set by clicking the image with a mouse.
-Shows a histogram overlay while adjusting.  
+The mode can be set by touching on one of the purple tool 
+selection zones.  
 */
 
 import oscP5.*;
@@ -20,13 +20,32 @@ float oldRot;
 color histColor;
 String name;
 
+// Image properties
+int imageWidth = 640;
+int imageHeight = 573;
+int imageOffsetX = 120;
+int imageOffsetY = 0;
+
+// Tool zone params
+String[] toolZones = {"brightness", "contrast", "undecided"};
+int toolZoneHeight = 100;
+int toolZoneWidth = toolZoneHeight;
+int offsetX = 10;
+int offsetY = 60;
+int zoneMargin = 40;
+int zoneStrokeOffset = 10;
+String currentlyPressedZone = null;
+
+boolean adjustmentZoneActive = false;
+String adjustmentZone = "gesture";
+
 void setup() {
-  size(640,573);
+  size(760,573);
   tintValue = 255;
   
   zones=new TUIOzoneCollection(this);
-  zones.setZone("image", 0,0,640,573);
-  zones.setZone("gesture", 0,0,width,height);
+  createToolZones(toolZones);
+  zones.setZone("image", imageOffsetX,0,imageWidth,imageHeight);
   img = loadImage("butterfly.jpg");
   output = img;
   
@@ -37,11 +56,8 @@ void setup() {
   name = "brightness";
 }
 
-void mousePressed() {
-  name = (name=="brightness" ? "contrast" : "brightness");
-}
-
 void draw(){
+  background(0);
   noFill();
 
   // use the zone coordinates and size to display the image
@@ -52,37 +68,15 @@ void draw(){
     zones.getZoneWidth("image"),
     zones.getZoneHeight("image")
   );
-  // outline photo when pressed
-  if (zones.isZonePressed("gesture")) {
-    
-    // show the histogram overlay
-    drawHistogram(output, histColor);
-    
-    rect(
-      zones.getZoneX("image"),zones.getZoneY("image"),
-      zones.getZoneWidth("image"),zones.getZoneHeight("image")
-    );
-    
-    float rot = zones.getGestureRotation("gesture");
-    
-    // Alright, let's do something!
-    if (rot != oldRot) {
-      float delta = rot-oldRot;
-
-      /* Ignore huge jumps..
-      These happen in 2 cases in particular:
-      1) when the second touch point moves straight above the first
-      2) when the touch has been released and rotation starts again 
-        (as the old rotation was something completely different)
-      */
-      if (abs(delta) > .5) delta = 0;
-      //println(delta);
-      if (name == "brightness") brightness(img, output, delta);
-      else if (name == "contrast") contrast(img, output, delta);
-    }
-    oldRot = rot;
-  }
   
+  if (isToolZonePressed()) {
+    activateAdjustmentIfNotActive();
+    renderCurrentlyPressedZone();
+    applyToolToImage();
+  } else {
+    deactivateAdjustment();
+    renderAllToolZones();
+  }
   
   noStroke();
   fill(255);
@@ -91,12 +85,108 @@ void draw(){
   text(name, 10, 15);
 }
 
+/*
+  Tool selection methods
+*/
+
+boolean isToolZonePressed() {
+  return getCurrentlyPressedZone() != null;
+}
+
+boolean activateAdjustmentIfNotActive() {
+  if (adjustmentZoneActive) {
+    return false;
+  }
+  zones.setZone(
+    adjustmentZone, 
+    100,0, 
+    width-100,height
+    );
+  adjustmentZoneActive = true;
+  return true;
+}
+
+void deactivateAdjustment() {
+  zones.killZone(adjustmentZone);
+  adjustmentZoneActive = false;
+}
+
+void renderCurrentlyPressedZone() {
+  fill(100,0,100);
+  stroke(200,200,0);
+  strokeWeight(4);
+  zones.drawRect(getCurrentlyPressedZone());
+  noFill();
+  noStroke();
+}
+
+String getCurrentlyPressedZone() {
+  // This first check for increased performance with many zones.
+  if (currentlyPressedZone != null && zones.isZonePressed(currentlyPressedZone)) {
+    return currentlyPressedZone;
+  }
+  for (String zone : toolZones) {
+    if (zones.isZonePressed(zone)) {
+      currentlyPressedZone = zone;
+      return zone;
+    }
+  }
+  return null;
+}
+
+void renderAllToolZones() {
+  fill(100,0,100);
+  noStroke();
+  for (String zone : toolZones) {
+    zones.drawRect(zone);
+  }
+  noFill();
+}
+
+void applyToolToImage() {
+  name = getCurrentlyPressedZone();
+  // show the histogram overlay
+  drawHistogram(output, histColor);
+  
+  rect(
+    zones.getZoneX("image"),zones.getZoneY("image"),
+    zones.getZoneWidth("image"),zones.getZoneHeight("image")
+  );
+  
+  float rot = zones.getGestureRotation("gesture");
+  
+  // Alright, let's do something!
+  if (rot != oldRot) {
+    float delta = rot-oldRot;
+    /* Ignore huge jumps..
+    These happen in 2 cases in particular:
+    1) when the second touch point moves straight above the first
+    2) when the touch has been released and rotation starts again 
+      (as the old rotation was something completely different)
+    */
+    if (abs(delta) > .5) delta = 0;
+    //println(delta);
+    if (name == "brightness") brightness(img, output, delta);
+    else if (name == "contrast") contrast(img, output, delta);
+  }
+  oldRot = rot;
+}
+
+/*
+  Image adjustment methods
+*/
+
 void drawHistogram (PImage img, color histColor) {
   int[] hist = new int[256];
+  
+  int histogramX = imageOffsetX;
+  int histogramY = 0;
+  int histogramWidth = histogramX + img.width;
+  int histogramHeight = histogramY + img.height;
 
   // Calculate the histogram
-  for (int i = 0; i < img.width; i++) {
-    for (int j = 0; j < img.height; j++) {
+  for (int i = imageOffsetX; i < img.width + imageOffsetX; i++) {
+    for (int j = imageOffsetY; j < img.height + imageOffsetY; j++) {
       int bright = int(brightness(get(i, j)));
       hist[bright]++; 
     }
@@ -106,13 +196,13 @@ void drawHistogram (PImage img, color histColor) {
   int histMax = max(hist);
   
   stroke(histColor);
-  for (int i = 0; i < img.width; i++) {
+  for (int i = imageOffsetX; i < img.width + imageOffsetX; i++) {
     // Map i (from 0..img.width) to a location in the histogram (0..255)
-    int which = int(map(i, 0, img.width, 0, 255));
+    int which = int(map(i, imageOffsetX, img.width + imageOffsetX, 0, 255));
     // Convert the histogram value to a location between 
     // the bottom and the top of the picture
-    int y = int(map(hist[which], 0, histMax, img.height, 0));
-    line(i, img.height, i, y);
+    int y = int(map(hist[which], 0, histMax, img.height + imageOffsetY, imageOffsetY));
+    line(i, img.height + imageOffsetY, i, y);
   }
 }
 
@@ -214,4 +304,26 @@ void brightness(PImage input, PImage output, float change) {
   }
   input.updatePixels();
   output.updatePixels();
+}
+
+/*
+  Misc. util methods
+*/
+
+void createToolZones(String[] zoneNames) {
+  zones.setZone(
+    toolZones[0], 
+    offsetX,offsetY, 
+    toolZoneWidth,toolZoneHeight
+    );
+  zones.setZone(
+    toolZones[1], 
+    offsetX,offsetY + toolZoneHeight + zoneMargin, 
+    toolZoneWidth,toolZoneHeight
+    );
+  zones.setZone(
+    toolZones[2], 
+    offsetX,offsetY + toolZoneHeight*2 + zoneMargin*2, 
+    toolZoneWidth,toolZoneHeight
+    );
 }
