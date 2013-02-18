@@ -45,12 +45,13 @@ void setup() {
   tintValue = 255;
   
   zones=new TUIOzoneCollection(this);
-  createToolZones(toolZones);
   zones.setZone("image", imageOffsetX,0,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
   zones.setZoneParameter("image","DRAGGABLE",true);
   img = loadImage(imageFilename);
   output = img;
+  
+  createToolZones(toolZones);
   
   noFill();
   smooth();
