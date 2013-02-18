@@ -38,6 +38,7 @@ String currentlyPressedZone = null;
 
 boolean adjustmentZoneActive = false;
 String adjustmentZone = "gesture";
+String imageFilename = "butterfly.jpg";
 
 void setup() {
   size(760,573);
@@ -46,7 +47,7 @@ void setup() {
   zones=new TUIOzoneCollection(this);
   createToolZones(toolZones);
   zones.setZone("image", imageOffsetX,0,imageWidth,imageHeight);
-  img = loadImage("butterfly.jpg");
+  img = loadImage(imageFilename);
   output = img;
   
   noFill();
@@ -54,6 +55,20 @@ void setup() {
   
   histColor = color(255,0,255, 160);
   name = "brightness";
+}
+
+void mouseClicked(){
+  reset();
+}
+
+/* Return the image to its original state */
+void reset(){
+  println("Resetting.");
+  img = loadImage(imageFilename);
+  output = img;
+  img.updatePixels();
+  output.updatePixels();
+  output.updatePixels();
 }
 
 void draw(){
