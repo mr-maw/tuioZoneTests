@@ -217,6 +217,7 @@ void drawHistogram (PImage img, color histColor) {
   // Find the largest value in the histogram
   int histMax = max(hist);
   
+  strokeWeight(1);
   stroke(histColor);
   for (int i = imageOffsetX; i < img.width + imageOffsetX; i++) {
     // Map i (from 0..img.width) to a location in the histogram (0..255)
