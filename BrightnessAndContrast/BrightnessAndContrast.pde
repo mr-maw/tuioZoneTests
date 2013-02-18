@@ -27,7 +27,7 @@ int imageOffsetX = 120;
 int imageOffsetY = 0;
 
 // Tool zone params
-String[] toolZones = {"brightness", "contrast", "undecided"};
+String[] toolZones = {"brightness", "contrast", "undecided", "reset"};
 int toolZoneHeight = 100;
 int toolZoneWidth = toolZoneHeight;
 int offsetX = 10;
@@ -159,6 +159,11 @@ void renderAllToolZones() {
 }
 
 void applyToolToImage() {
+  if (getCurrentlyPressedZone() == "reset") {
+    reset();
+    return;
+  }
+  
   name = getCurrentlyPressedZone();
   // show the histogram overlay
   drawHistogram(output, histColor);
@@ -341,4 +346,10 @@ void createToolZones(String[] zoneNames) {
     offsetX,offsetY + toolZoneHeight*2 + zoneMargin*2, 
     toolZoneWidth,toolZoneHeight
     );
+    
+  zones.setZone(
+    toolZones[3],
+    offsetX, offsetY + toolZoneHeight*3 + zoneMargin*3,
+    toolZoneWidth,toolZoneHeight/2
+  );
 }
