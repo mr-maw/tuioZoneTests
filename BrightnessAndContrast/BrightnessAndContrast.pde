@@ -40,6 +40,8 @@ float[][] kernel = {
   }
 };
 
+float brushScale;
+
 // Tool zone params
 String[] toolZones = {"brightness", "contrast", "blur", "reset"};
 int toolZoneHeight = 100;
@@ -57,14 +59,15 @@ String imageFilename = "butterfly.jpg";
 void setup() {
   size(760,573);
   tintValue = 255;
-  
+  brushScale = 1.0;
   zones=new TUIOzoneCollection(this);
-  createToolZones(toolZones);
-  zones.setZone("image", imageOffsetX,0,imageWidth,imageHeight);
+  zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
   zones.setZoneParameter("image","DRAGGABLE",true);
   img = loadImage(imageFilename);
   output = img;
+  
+  createToolZones(toolZones);
   
   noFill();
   smooth();
@@ -190,25 +193,15 @@ void applyToolToImage() {
   );
   
   int[] zData = zones.getZoneData("image");
+  float scale = zones.getZoneScale("image");
   
   float rot = zones.getGestureRotation("gesture");
   
-  int[] cursor = new int[2];
-  int[][] cursors = zones.getPoints();
-  if(zones.isZonePressed("gesture")) {
-      println("image pressed");  
-  cursor[0] = cursors[1][0];
-  cursor[1] = cursors[1][1];
-  stroke(0, 200, 0);
-  ellipse(cursor[0], cursor[1], 5, 5);
-  println("cursor: " +  cursor[0] + ", " +  cursor[1]);
-  cursor = mapCursorToPixels(cursor, zData[0], zData[1], zData[2], zData[3], zones.getZoneScale("image"));
-  println("mapped cursor: " +  cursor[0] + ", " +  cursor[1]);
-  }
-  
+
+  float delta = 0;
   // Alright, let's do something!
   if (rot != oldRot) {
-    float delta = rot-oldRot;
+    delta = rot-oldRot;
     /* Ignore huge jumps..
     These happen in 2 cases in particular:
     1) when the second touch point moves straight above the first
@@ -220,19 +213,33 @@ void applyToolToImage() {
     if (name == "brightness") brightness(img, output, delta);
     else if (name == "contrast") contrast(img, output, delta);
   }
-  oldRot = rot;
+  oldRot = rot;  
+  
+  int[] cursor = new int[2];
+  int[][] cursors = zones.getPoints();
+  if(zones.isZonePressed("gesture")) {
+  float bScale = zones.getGestureScale("gesture");
+  println("scale: " + bScale);
+  if(bScale >= 1.0) {
+  brushScale += (bScale == 1.0 ? 0 : bScale/10);
+  } else {
+  brushScale -= bScale;  
+  }
+  cursor[0] = cursors[1][0];
+  cursor[1] = cursors[1][1];
+  drawCursor(cursor, max(1, brushScale)*scale);
+  cursor = mapCursorToPixels(cursor, zData[0], zData[1], zData[2], zData[3], scale);
+  }
   if (name == "blur" && cursor != null) {
-      println("blurring");
-      blur(img, output, cursor, 3);
-    }
+      blur(img, output, cursor, 3 + round(brushScale));
+  }
 }
 
+//Maps cursor coordinates to image pixels.
 int[] mapCursorToPixels(int[] cursor, int imgX, int imgY, int imgW, int imgH, float imgScale) {
-  println(imgX + ", " + imgY + ", " + imgW + ", " + imgH + ", " + imgScale);
   float[] coords = new float[2];
   coords[0] = (cursor[0]-imgX)/imgScale;
   coords[1] = (cursor[1]-imgY)/imgScale;
-  println(coords[0] + ", " + coords[1]);
   int[] cursorInImgCoords = new int[2];
   cursorInImgCoords[0] = round(constrain(coords[0], 0, imgW));
   cursorInImgCoords[1] = round(constrain(coords[1], 0, imgH));
@@ -252,6 +259,11 @@ boolean isOutOfBounds(int[] coords) {
   return coords[0] == -1 || coords[1] == -1;
 }
 
+void drawCursor(int[] cursor, float scale) {
+  ellipseMode(CENTER);
+  stroke(0, 200, 0);
+  ellipse(cursor[0], cursor[1], 5*scale, 5*scale);
+}
 /*
   Image adjustment methods
 */
@@ -261,13 +273,15 @@ void drawHistogram (PImage img, color histColor) {
   
   int histogramX = imageOffsetX;
   int histogramY = 0;
-  int histogramWidth = histogramX + img.width;
-  int histogramHeight = histogramY + img.height;
-
+  int histogramWidth = imageWidth;
+  int histogramHeight = imageHeight;
+  
+  img.loadPixels();
+  
   // Calculate the histogram
-  for (int i = imageOffsetX; i < img.width + imageOffsetX; i++) {
-    for (int j = imageOffsetY; j < img.height + imageOffsetY; j++) {
-      int bright = int(brightness(get(i, j)));
+  for (int i = 0; i < imageWidth; i++) {
+    for (int j = 0; j < imageHeight; j++) {
+      int bright = int(brightness(img.pixels[j*imageWidth+i]));
       hist[bright]++; 
     }
   }
@@ -277,13 +291,13 @@ void drawHistogram (PImage img, color histColor) {
   
   strokeWeight(1);
   stroke(histColor);
-  for (int i = imageOffsetX; i < img.width + imageOffsetX; i++) {
+  for (int i = 0; i < histogramWidth; i++) {
     // Map i (from 0..img.width) to a location in the histogram (0..255)
-    int which = int(map(i, imageOffsetX, img.width + imageOffsetX, 0, 255));
+    int which = int(map(i, 0, imageWidth, 0, 255));
     // Convert the histogram value to a location between 
     // the bottom and the top of the picture
-    int y = int(map(hist[which], 0, histMax, img.height + imageOffsetY, imageOffsetY));
-    line(i, img.height + imageOffsetY, i, y);
+    int y = int(map(hist[which], 0, histMax, histogramY + histogramHeight, histogramY));
+    line(histogramX + i, histogramY + histogramHeight, histogramX + i, y);
   }
 }
 
