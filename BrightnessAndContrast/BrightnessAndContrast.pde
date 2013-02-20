@@ -204,13 +204,15 @@ void drawHistogram (PImage img, color histColor) {
   
   int histogramX = imageOffsetX;
   int histogramY = 0;
-  int histogramWidth = histogramX + img.width;
-  int histogramHeight = histogramY + img.height;
-
+  int histogramWidth = imageWidth;
+  int histogramHeight = imageHeight;
+  
+  img.loadPixels();
+  
   // Calculate the histogram
-  for (int i = imageOffsetX; i < img.width + imageOffsetX; i++) {
-    for (int j = imageOffsetY; j < img.height + imageOffsetY; j++) {
-      int bright = int(brightness(get(i, j)));
+  for (int i = 0; i < imageWidth; i++) {
+    for (int j = 0; j < imageHeight; j++) {
+      int bright = int(brightness(img.pixels[j*imageWidth+i]));
       hist[bright]++; 
     }
   }
@@ -220,13 +222,13 @@ void drawHistogram (PImage img, color histColor) {
   
   strokeWeight(1);
   stroke(histColor);
-  for (int i = imageOffsetX; i < img.width + imageOffsetX; i++) {
+  for (int i = 0; i < histogramWidth; i++) {
     // Map i (from 0..img.width) to a location in the histogram (0..255)
-    int which = int(map(i, imageOffsetX, img.width + imageOffsetX, 0, 255));
+    int which = int(map(i, 0, imageWidth, 0, 255));
     // Convert the histogram value to a location between 
     // the bottom and the top of the picture
-    int y = int(map(hist[which], 0, histMax, img.height + imageOffsetY, imageOffsetY));
-    line(i, img.height + imageOffsetY, i, y);
+    int y = int(map(hist[which], 0, histMax, histogramY + histogramHeight, histogramY));
+    line(histogramX + i, histogramY + histogramHeight, histogramX + i, y);
   }
 }
 
