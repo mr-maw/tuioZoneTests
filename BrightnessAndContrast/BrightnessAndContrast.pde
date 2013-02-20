@@ -45,7 +45,7 @@ void setup() {
   tintValue = 255;
   
   zones=new TUIOzoneCollection(this);
-  zones.setZone("image", imageOffsetX,0,imageWidth,imageHeight);
+  zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
   zones.setZoneParameter("image","DRAGGABLE",true);
   img = loadImage(imageFilename);
@@ -170,11 +170,6 @@ void applyToolToImage() {
   name = getCurrentlyPressedZone();
   // show the histogram overlay
   drawHistogram(output, histColor);
-  
-  rect(
-    zones.getZoneX("image"),zones.getZoneY("image"),
-    zones.getZoneWidth("image"),zones.getZoneHeight("image")
-  );
   
   float rot = zones.getGestureRotation("gesture");
   
