@@ -67,6 +67,10 @@ void mouseClicked(){
 /* Return the image to its original state */
 void reset(){
   println("Resetting.");
+  zones.killZone("image");
+  zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
+  zones.setZoneParameter("image","SCALABLE",true);
+  zones.setZoneParameter("image","DRAGGABLE",true);
   img = loadImage(imageFilename);
   output = img;
   output.updatePixels();
@@ -75,7 +79,7 @@ void reset(){
 void draw(){
   background(0);
   noFill();
-
+  
   // use the zone coordinates and size to display the image
   image(
     output, 
