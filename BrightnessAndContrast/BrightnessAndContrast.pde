@@ -26,7 +26,6 @@ int imageHeight = 573;
 int imageOffsetX = 120;
 int imageOffsetY = 0;
 
-<<<<<<< HEAD
 //blur kernel
 float v2 = 1.0/9.0;
 float[][] kernel = {
@@ -42,22 +41,21 @@ float[][] kernel = {
 };
 
 float brushScale;
-=======
 // Icon props
 PImage brightnessIcon;
 PImage contrastIcon;
 PImage blurIcon;
+PImage resetIcon;
 int iconWidth = 64;
 int iconHeight = 64;
->>>>>>> 93c121fd7103b24e26743c91df67bfddb5966279
 
 // Tool zone params
 String[] toolZones = {"brightness", "contrast", "blur", "reset"};
 int toolZoneHeight = 100;
 int toolZoneWidth = toolZoneHeight;
 int offsetX = 10;
-int offsetY = 60;
-int zoneMargin = 40;
+int offsetY = 10;
+int zoneMargin = 10;
 int zoneStrokeOffset = 10;
 String currentlyPressedZone = null;
 
@@ -67,13 +65,10 @@ String imageFilename = "butterfly.jpg";
 
 void setup() {
   size(760,573);
-<<<<<<< HEAD
   tintValue = 255;
   brushScale = 1.0;
-=======
   
   // Create tuioZones
->>>>>>> 93c121fd7103b24e26743c91df67bfddb5966279
   zones=new TUIOzoneCollection(this);
   zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
@@ -87,13 +82,14 @@ void setup() {
   brightnessIcon = loadImage("brightness.png");
   contrastIcon = loadImage("contrast.png");
   blurIcon = loadImage("smudge.png");
+  resetIcon = loadImage("reset.png");
   
   createToolZones(toolZones);
   
   noFill();
   smooth();
   
-  histColor = color(255,0,255, 160);
+  histColor = color(255,0,255);
   name = "brightness";
 }
 
@@ -134,12 +130,6 @@ void draw(){
     deactivateAdjustment();
     renderAllToolZones();
   }
-  
-  noStroke();
-  fill(255);
-  rect(0, 0, 94, 22);
-  fill(0);
-  text(name, 10, 15);
 }
 
 /*
@@ -198,6 +188,7 @@ void renderZone(String zone) {
   if (zone == "brightness") icon = brightnessIcon;
   else if (zone == "contrast") icon = contrastIcon;
   else if (zone == "blur") icon = blurIcon;
+  else if (zone == "reset") icon = resetIcon;
   
   if (icon != null) {
     image(
@@ -228,11 +219,6 @@ void applyToolToImage() {
   name = getCurrentlyPressedZone();
   // show the histogram overlay
   drawHistogram(output, histColor);
-  
-  rect(
-    zones.getZoneX("image"),zones.getZoneY("image"),
-    zones.getZoneWidth("image"),zones.getZoneHeight("image")
-  );
   
   int[] zData = zones.getZoneData("image");
   float scale = zones.getZoneScale("image");
@@ -321,7 +307,7 @@ void drawHistogram (PImage img, color histColor) {
   img.loadPixels();
   
   // Calculate the histogram
-  for (int i = 0; i < imageWidth; i+=2) {
+  for (int i = 0; i < imageWidth; i++) {
     for (int j = 0; j < imageHeight; j++) {
       int bright = int(brightness(img.pixels[j*imageWidth+i]));
       hist[bright]++; 
@@ -333,7 +319,7 @@ void drawHistogram (PImage img, color histColor) {
   
   strokeWeight(1);
   stroke(histColor);
-  for (int i = 0; i < histogramWidth; i++) {
+  for (int i = 0; i < histogramWidth; i+=2) {
     // Map i (from 0..img.width) to a location in the histogram (0..255)
     int which = int(map(i, 0, imageWidth, 0, 255));
     // Convert the histogram value to a location between 
@@ -509,8 +495,8 @@ void createToolZones(String[] zoneNames) {
     );
     
   zones.setZone(
-    toolZones[3],
-    offsetX, offsetY + toolZoneHeight*3 + zoneMargin*3,
+    "reset",
+    offsetX, height - toolZoneHeight/2 - offsetY,
     toolZoneWidth,toolZoneHeight/2
   );
 }
