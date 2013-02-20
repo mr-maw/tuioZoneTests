@@ -69,8 +69,6 @@ void reset(){
   println("Resetting.");
   img = loadImage(imageFilename);
   output = img;
-  img.updatePixels();
-  output.updatePixels();
   output.updatePixels();
 }
 
@@ -205,7 +203,7 @@ void drawHistogram (PImage img, color histColor) {
   img.loadPixels();
   
   // Calculate the histogram
-  for (int i = 0; i < imageWidth; i++) {
+  for (int i = 0; i < imageWidth; i+=2) {
     for (int j = 0; j < imageHeight; j++) {
       int bright = int(brightness(img.pixels[j*imageWidth+i]));
       hist[bright]++; 
