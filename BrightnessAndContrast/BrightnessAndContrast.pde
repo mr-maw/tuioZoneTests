@@ -26,12 +26,30 @@ int imageHeight = 573;
 int imageOffsetX = 120;
 int imageOffsetY = 0;
 
+<<<<<<< HEAD
+//blur kernel
+float v2 = 1.0/9.0;
+float[][] kernel = {
+  {
+    v2, v2, v2
+  }
+  , {
+    v2, v2, v2
+  }
+  , {
+    v2, v2, v2
+  }
+};
+
+float brushScale;
+=======
 // Icon props
 PImage brightnessIcon;
 PImage contrastIcon;
 PImage blurIcon;
 int iconWidth = 64;
 int iconHeight = 64;
+>>>>>>> 93c121fd7103b24e26743c91df67bfddb5966279
 
 // Tool zone params
 String[] toolZones = {"brightness", "contrast", "blur", "reset"};
@@ -49,8 +67,13 @@ String imageFilename = "butterfly.jpg";
 
 void setup() {
   size(760,573);
+<<<<<<< HEAD
+  tintValue = 255;
+  brushScale = 1.0;
+=======
   
   // Create tuioZones
+>>>>>>> 93c121fd7103b24e26743c91df67bfddb5966279
   zones=new TUIOzoneCollection(this);
   zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
@@ -206,11 +229,21 @@ void applyToolToImage() {
   // show the histogram overlay
   drawHistogram(output, histColor);
   
+  rect(
+    zones.getZoneX("image"),zones.getZoneY("image"),
+    zones.getZoneWidth("image"),zones.getZoneHeight("image")
+  );
+  
+  int[] zData = zones.getZoneData("image");
+  float scale = zones.getZoneScale("image");
+  
   float rot = zones.getGestureRotation("gesture");
   
+
+  float delta = 0;
   // Alright, let's do something!
   if (rot != oldRot) {
-    float delta = rot-oldRot;
+    delta = rot-oldRot;
     /* Ignore huge jumps..
     These happen in 2 cases in particular:
     1) when the second touch point moves straight above the first
@@ -222,9 +255,57 @@ void applyToolToImage() {
     if (name == "brightness") brightness(img, output, delta);
     else if (name == "contrast") contrast(img, output, delta);
   }
-  oldRot = rot;
+  oldRot = rot;  
+  
+  int[] cursor = new int[2];
+  int[][] cursors = zones.getPoints();
+  if(zones.isZonePressed("gesture")) {
+  float bScale = zones.getGestureScale("gesture");
+  println("scale: " + bScale);
+  if(bScale >= 1.0) {
+  brushScale += (bScale == 1.0 ? 0 : bScale/10);
+  } else {
+  brushScale -= bScale;  
+  }
+  cursor[0] = cursors[1][0];
+  cursor[1] = cursors[1][1];
+  drawCursor(cursor, max(1, brushScale)*scale);
+  cursor = mapCursorToPixels(cursor, zData[0], zData[1], zData[2], zData[3], scale);
+  }
+  if (name == "blur" && cursor != null) {
+      blur(img, output, cursor, 3 + round(brushScale));
+  }
 }
 
+//Maps cursor coordinates to image pixels.
+int[] mapCursorToPixels(int[] cursor, int imgX, int imgY, int imgW, int imgH, float imgScale) {
+  float[] coords = new float[2];
+  coords[0] = (cursor[0]-imgX)/imgScale;
+  coords[1] = (cursor[1]-imgY)/imgScale;
+  int[] cursorInImgCoords = new int[2];
+  cursorInImgCoords[0] = round(constrain(coords[0], 0, imgW));
+  cursorInImgCoords[1] = round(constrain(coords[1], 0, imgH));
+  if (cursorInImgCoords[0] <= 0 || cursorInImgCoords[1] <= 0 ||
+    cursorInImgCoords[0] >= imgW || cursorInImgCoords[1] >= imgH) {
+    setToOutOfBounds(cursorInImgCoords);
+  }
+  return cursorInImgCoords;
+}
+
+void setToOutOfBounds(int[] coords) {
+  coords[0] = -1;
+  coords[1] = -1;
+}
+
+boolean isOutOfBounds(int[] coords) {
+  return coords[0] == -1 || coords[1] == -1;
+}
+
+void drawCursor(int[] cursor, float scale) {
+  ellipseMode(CENTER);
+  stroke(0, 200, 0);
+  ellipse(cursor[0], cursor[1], 5*scale, 5*scale);
+}
 /*
   Image adjustment methods
 */
@@ -317,6 +398,7 @@ void brightness(PImage input, PImage output, float change) {
   //println(change);
   // amplification for the change
   float k = 20.0;
+  float amplified = k*change;
   
   for (int x = 0; x < input.width; x++) {
     for (int y = 0; y < input.height; y++ ) {
@@ -333,9 +415,9 @@ void brightness(PImage input, PImage output, float change) {
       int b = input.pixels[i] & 0xFF; 
       
       
-      r = (int)(r + change*k);
-      g = (int)(g + change*k);
-      b = (int)(b + change*k);
+      r = (int)(r + amplified);
+      g = (int)(g + amplified);
+      b = (int)(b + amplified);
       if (x == 0 && y == 0) println("rgb: "+r+", "+g+", "+b);
       
       // Constrain RGB to between 0-255
@@ -360,6 +442,49 @@ void brightness(PImage input, PImage output, float change) {
   }
   input.updatePixels();
   output.updatePixels();
+}
+
+void blur(PImage input, PImage output, int[] cursor, int radius) {
+
+  input.loadPixels();
+  output.loadPixels();
+
+  int cX = cursor[0];
+  int cY = cursor[1];
+
+  for (int y = cY-radius; y < cY+radius; y++) 
+  {
+    for (int x = cX-radius; x < cX+radius; x++) 
+    {
+      //Check boundaries
+      if (cX-radius-1 >= 0 && cX+radius+1 < input.width && 
+      cY-radius-1 >= 0 && cY+radius+1 < input.height) 
+      {
+        float sumR = 0; 
+        float sumG = 0;
+        float sumB = 0;
+        //Sum the surrounding pixels using the kernel matrix.
+        for (int ky = -1; ky <= 1; ky++) 
+        {
+          for (int kx = -1; kx <= 1; kx++) 
+          {
+            int p = (y + ky)*input.width + (x + kx);
+
+            float valR = red(input.pixels[p]);
+            float valG = green(input.pixels[p]);
+            float valB = blue(input.pixels[p]);
+
+            sumR += kernel[ky+1][kx+1] * valR;
+            sumG += kernel[ky+1][kx+1] * valG;
+            sumB += kernel[ky+1][kx+1] * valB;
+          }
+        }
+        output.pixels[y*input.width + x] = color(sumR, sumG, sumB);
+      }
+    }
+  }
+  output.updatePixels();
+  input.updatePixels();
 }
 
 /*
