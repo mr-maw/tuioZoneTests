@@ -26,6 +26,7 @@ int imageHeight = 573;
 int imageOffsetX = 120;
 int imageOffsetY = 0;
 
+<<<<<<< HEAD
 //blur kernel
 float v2 = 1.0/9.0;
 float[][] kernel = {
@@ -41,6 +42,14 @@ float[][] kernel = {
 };
 
 float brushScale;
+=======
+// Icon props
+PImage brightnessIcon;
+PImage contrastIcon;
+PImage blurIcon;
+int iconWidth = 64;
+int iconHeight = 64;
+>>>>>>> 93c121fd7103b24e26743c91df67bfddb5966279
 
 // Tool zone params
 String[] toolZones = {"brightness", "contrast", "blur", "reset"};
@@ -58,14 +67,26 @@ String imageFilename = "butterfly.jpg";
 
 void setup() {
   size(760,573);
+<<<<<<< HEAD
   tintValue = 255;
   brushScale = 1.0;
+=======
+  
+  // Create tuioZones
+>>>>>>> 93c121fd7103b24e26743c91df67bfddb5966279
   zones=new TUIOzoneCollection(this);
   zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
   zones.setZoneParameter("image","DRAGGABLE",true);
+  
+  // Load the image and the "adjusted" image
   img = loadImage(imageFilename);
   output = img;
+  
+  // Icons
+  brightnessIcon = loadImage("brightness.png");
+  contrastIcon = loadImage("contrast.png");
+  blurIcon = loadImage("smudge.png");
   
   createToolZones(toolZones);
   
@@ -82,18 +103,20 @@ void mouseClicked(){
 
 /* Return the image to its original state */
 void reset(){
-  println("Resetting.");
+  //println("Resetting.");
+  zones.killZone("image");
+  zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
+  zones.setZoneParameter("image","SCALABLE",true);
+  zones.setZoneParameter("image","DRAGGABLE",true);
   img = loadImage(imageFilename);
   output = img;
-  img.updatePixels();
-  output.updatePixels();
   output.updatePixels();
 }
 
 void draw(){
   background(0);
   noFill();
-
+  
   // use the zone coordinates and size to display the image
   image(
     output, 
@@ -149,7 +172,7 @@ void renderCurrentlyPressedZone() {
   fill(100,0,100);
   stroke(200,200,0);
   strokeWeight(4);
-  zones.drawRect(getCurrentlyPressedZone());
+  renderZone(getCurrentlyPressedZone());
   noFill();
   noStroke();
 }
@@ -168,11 +191,30 @@ String getCurrentlyPressedZone() {
   return null;
 }
 
+void renderZone(String zone) {
+  zones.drawRect(zone);
+    
+  PImage icon = null;
+  if (zone == "brightness") icon = brightnessIcon;
+  else if (zone == "contrast") icon = contrastIcon;
+  else if (zone == "blur") icon = blurIcon;
+  
+  if (icon != null) {
+    image(
+      icon,
+      (int)(zones.getZoneX(zone) + zones.getZoneWidth(zone)/2.0 - iconWidth/2.0),
+      (int)(zones.getZoneY(zone) + zones.getZoneHeight(zone)/2.0 - iconHeight/2.0),
+      iconWidth,
+      iconHeight
+    );
+  }
+}
+
 void renderAllToolZones() {
   fill(100,0,100);
   noStroke();
   for (String zone : toolZones) {
-    zones.drawRect(zone);
+    renderZone(zone);
   }
   noFill();
 }
@@ -279,7 +321,7 @@ void drawHistogram (PImage img, color histColor) {
   img.loadPixels();
   
   // Calculate the histogram
-  for (int i = 0; i < imageWidth; i++) {
+  for (int i = 0; i < imageWidth; i+=2) {
     for (int j = 0; j < imageHeight; j++) {
       int bright = int(brightness(img.pixels[j*imageWidth+i]));
       hist[bright]++; 
