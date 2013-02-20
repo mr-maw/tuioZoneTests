@@ -26,8 +26,15 @@ int imageHeight = 573;
 int imageOffsetX = 120;
 int imageOffsetY = 0;
 
+// Icon props
+PImage brightnessIcon;
+PImage contrastIcon;
+PImage blurIcon;
+int iconWidth = 64;
+int iconHeight = 64;
+
 // Tool zone params
-String[] toolZones = {"brightness", "contrast", "undecided", "reset"};
+String[] toolZones = {"brightness", "contrast", "blur", "reset"};
 int toolZoneHeight = 100;
 int toolZoneWidth = toolZoneHeight;
 int offsetX = 10;
@@ -42,14 +49,21 @@ String imageFilename = "butterfly.jpg";
 
 void setup() {
   size(760,573);
-  tintValue = 255;
   
+  // Create tuioZones
   zones=new TUIOzoneCollection(this);
   zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
   zones.setZoneParameter("image","DRAGGABLE",true);
+  
+  // Load the image and the "adjusted" image
   img = loadImage(imageFilename);
   output = img;
+  
+  // Icons
+  brightnessIcon = loadImage("brightness.png");
+  contrastIcon = loadImage("contrast.png");
+  blurIcon = loadImage("smudge.png");
   
   createToolZones(toolZones);
   
@@ -66,7 +80,7 @@ void mouseClicked(){
 
 /* Return the image to its original state */
 void reset(){
-  println("Resetting.");
+  //println("Resetting.");
   zones.killZone("image");
   zones.setZone("image", imageOffsetX,imageOffsetY,imageWidth,imageHeight);
   zones.setZoneParameter("image","SCALABLE",true);
@@ -135,7 +149,7 @@ void renderCurrentlyPressedZone() {
   fill(100,0,100);
   stroke(200,200,0);
   strokeWeight(4);
-  zones.drawRect(getCurrentlyPressedZone());
+  renderZone(getCurrentlyPressedZone());
   noFill();
   noStroke();
 }
@@ -154,11 +168,30 @@ String getCurrentlyPressedZone() {
   return null;
 }
 
+void renderZone(String zone) {
+  zones.drawRect(zone);
+    
+  PImage icon = null;
+  if (zone == "brightness") icon = brightnessIcon;
+  else if (zone == "contrast") icon = contrastIcon;
+  else if (zone == "blur") icon = blurIcon;
+  
+  if (icon != null) {
+    image(
+      icon,
+      (int)(zones.getZoneX(zone) + zones.getZoneWidth(zone)/2.0 - iconWidth/2.0),
+      (int)(zones.getZoneY(zone) + zones.getZoneHeight(zone)/2.0 - iconHeight/2.0),
+      iconWidth,
+      iconHeight
+    );
+  }
+}
+
 void renderAllToolZones() {
   fill(100,0,100);
   noStroke();
   for (String zone : toolZones) {
-    zones.drawRect(zone);
+    renderZone(zone);
   }
   noFill();
 }
