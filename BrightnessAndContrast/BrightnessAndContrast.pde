@@ -26,8 +26,22 @@ int imageHeight = 573;
 int imageOffsetX = 120;
 int imageOffsetY = 0;
 
+//blur kernel
+float v2 = 1.0/9.0;
+float[][] kernel = {
+  {
+    v2, v2, v2
+  }
+  , {
+    v2, v2, v2
+  }
+  , {
+    v2, v2, v2
+  }
+};
+
 // Tool zone params
-String[] toolZones = {"brightness", "contrast", "undecided", "reset"};
+String[] toolZones = {"brightness", "contrast", "blur", "reset"};
 int toolZoneHeight = 100;
 int toolZoneWidth = toolZoneHeight;
 int offsetX = 10;
@@ -175,7 +189,22 @@ void applyToolToImage() {
     zones.getZoneWidth("image"),zones.getZoneHeight("image")
   );
   
+  int[] zData = zones.getZoneData("image");
+  
   float rot = zones.getGestureRotation("gesture");
+  
+  int[] cursor = new int[2];
+  int[][] cursors = zones.getPoints();
+  if(zones.isZonePressed("gesture")) {
+      println("image pressed");  
+  cursor[0] = cursors[1][0];
+  cursor[1] = cursors[1][1];
+  stroke(0, 200, 0);
+  ellipse(cursor[0], cursor[1], 5, 5);
+  println("cursor: " +  cursor[0] + ", " +  cursor[1]);
+  cursor = mapCursorToPixels(cursor, zData[0], zData[1], zData[2], zData[3], zones.getZoneScale("image"));
+  println("mapped cursor: " +  cursor[0] + ", " +  cursor[1]);
+  }
   
   // Alright, let's do something!
   if (rot != oldRot) {
@@ -192,6 +221,35 @@ void applyToolToImage() {
     else if (name == "contrast") contrast(img, output, delta);
   }
   oldRot = rot;
+  if (name == "blur" && cursor != null) {
+      println("blurring");
+      blur(img, output, cursor, 3);
+    }
+}
+
+int[] mapCursorToPixels(int[] cursor, int imgX, int imgY, int imgW, int imgH, float imgScale) {
+  println(imgX + ", " + imgY + ", " + imgW + ", " + imgH + ", " + imgScale);
+  float[] coords = new float[2];
+  coords[0] = (cursor[0]-imgX)/imgScale;
+  coords[1] = (cursor[1]-imgY)/imgScale;
+  println(coords[0] + ", " + coords[1]);
+  int[] cursorInImgCoords = new int[2];
+  cursorInImgCoords[0] = round(constrain(coords[0], 0, imgW));
+  cursorInImgCoords[1] = round(constrain(coords[1], 0, imgH));
+  if (cursorInImgCoords[0] <= 0 || cursorInImgCoords[1] <= 0 ||
+    cursorInImgCoords[0] >= imgW || cursorInImgCoords[1] >= imgH) {
+    setToOutOfBounds(cursorInImgCoords);
+  }
+  return cursorInImgCoords;
+}
+
+void setToOutOfBounds(int[] coords) {
+  coords[0] = -1;
+  coords[1] = -1;
+}
+
+boolean isOutOfBounds(int[] coords) {
+  return coords[0] == -1 || coords[1] == -1;
 }
 
 /*
@@ -284,6 +342,7 @@ void brightness(PImage input, PImage output, float change) {
   //println(change);
   // amplification for the change
   float k = 20.0;
+  float amplified = k*change;
   
   for (int x = 0; x < input.width; x++) {
     for (int y = 0; y < input.height; y++ ) {
@@ -300,9 +359,9 @@ void brightness(PImage input, PImage output, float change) {
       int b = input.pixels[i] & 0xFF; 
       
       
-      r = (int)(r + change*k);
-      g = (int)(g + change*k);
-      b = (int)(b + change*k);
+      r = (int)(r + amplified);
+      g = (int)(g + amplified);
+      b = (int)(b + amplified);
       if (x == 0 && y == 0) println("rgb: "+r+", "+g+", "+b);
       
       // Constrain RGB to between 0-255
@@ -327,6 +386,49 @@ void brightness(PImage input, PImage output, float change) {
   }
   input.updatePixels();
   output.updatePixels();
+}
+
+void blur(PImage input, PImage output, int[] cursor, int radius) {
+
+  input.loadPixels();
+  output.loadPixels();
+
+  int cX = cursor[0];
+  int cY = cursor[1];
+
+  for (int y = cY-radius; y < cY+radius; y++) 
+  {
+    for (int x = cX-radius; x < cX+radius; x++) 
+    {
+      //Check boundaries
+      if (cX-radius-1 >= 0 && cX+radius+1 < input.width && 
+      cY-radius-1 >= 0 && cY+radius+1 < input.height) 
+      {
+        float sumR = 0; 
+        float sumG = 0;
+        float sumB = 0;
+        //Sum the surrounding pixels using the kernel matrix.
+        for (int ky = -1; ky <= 1; ky++) 
+        {
+          for (int kx = -1; kx <= 1; kx++) 
+          {
+            int p = (y + ky)*input.width + (x + kx);
+
+            float valR = red(input.pixels[p]);
+            float valG = green(input.pixels[p]);
+            float valB = blue(input.pixels[p]);
+
+            sumR += kernel[ky+1][kx+1] * valR;
+            sumG += kernel[ky+1][kx+1] * valG;
+            sumB += kernel[ky+1][kx+1] * valB;
+          }
+        }
+        output.pixels[y*input.width + x] = color(sumR, sumG, sumB);
+      }
+    }
+  }
+  output.updatePixels();
+  input.updatePixels();
 }
 
 /*
