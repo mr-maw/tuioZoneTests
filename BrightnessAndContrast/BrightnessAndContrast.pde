@@ -21,10 +21,11 @@ color histColor;
 String name;
 
 // Image properties
+float ratio = 640.0/573.0;
 int imageWidth = 640;
 int imageHeight = 573;
 int imageOffsetX = 120;
-int imageOffsetY = 0;
+int imageOffsetY = 10;
 
 //blur kernel
 float v2 = 1.0/9.0;
@@ -61,12 +62,16 @@ String currentlyPressedZone = null;
 
 boolean adjustmentZoneActive = false;
 String adjustmentZone = "gesture";
-String imageFilename = "butterfly.jpg";
+String imageFilename = "butterfly_full.jpg";
 
 void setup() {
-  size(760,573);
+  size(displayWidth,displayHeight);
   tintValue = 255;
   brushScale = 1.0;
+  
+  // TODO Width overflow
+  int imageHeight = height - imageOffsetY * 2;
+  int imageWidth = (int)(imageHeight * ratio);
   
   // Create tuioZones
   zones=new TUIOzoneCollection(this);
@@ -496,7 +501,7 @@ void createToolZones(String[] zoneNames) {
     
   zones.setZone(
     "reset",
-    offsetX, height - toolZoneHeight/2 - offsetY,
+    offsetX, height - toolZoneHeight/2  - offsetY,
     toolZoneWidth,toolZoneHeight/2
   );
 }
