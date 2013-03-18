@@ -27,7 +27,15 @@ Design Priciples
 ----------------
 
 ### Interaction Design
-The ImageManipulation application is designed to follow the basic established touch-based interface conventions. Image position   
+
+The basic interaction concept in the application is having two separate modes: 1) moving and scaling, and 2) manipulating the image. Whenever the user touches just the image, the application is in moving and scaling mode. When the user holds one of the tool buttons, however, the application is in manipulating mode. This allows for fast switching between the modes in a very natural way: the user can scale up the image with the right hand, select the tool with the left and do adjustments with the right, then lift up the left hand and pan around the image with the right.
+
+The ImageManipulation application is designed to follow the basic established touch-based interface conventions. The image can be dragged to desired position using a single finger swipe motion and scaled using two fingers in a pinch-to-zoom gesture. Since the application is aimed for doing basic manipulation to natural images, it was decided that being able to rotate the image while manipulating was not necessary.
+
+Having a large touch screen makes it natural to use both hands for interaction. This epiphany eventually lead to the idea of having touch-toggles for the tools. Instead of following WIMP-based conventions and having click-to-toggle type of buttons, we decided to make tool selection transparent so that when the user wants to use the Smudge tool, she keeps her other hand on the Smudge button. This way it is always clear to the user whether touching the image will move it or actually result in manipulation.
+
+Inspiration for the adjustments' (Brightness and Contrast) interaction came from physical user interfaces. The rotating motion is similar to using a knob, which are commonly used for adjusting volume, balance and so on in Hi-Fi equipment. In the Western culture, clockwise motion is perceived as going forward, so the adjustment values grow stronger in this direction and weaker in the opposite direction. 
+
 
 ### Application Architecture
 
