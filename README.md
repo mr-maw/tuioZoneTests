@@ -30,3 +30,9 @@ Design Priciples
 The ImageManipulation application is designed to follow the basic established touch-based interface conventions. Image position   
 
 ### Application Architecture
+
+Following Processing.org conventions, the application is structured using a division of logic into a "setup" phase and a "draw" cycle. The latter consists of procedures for drawing the background and the image with the applied transformation properties and checking for tool selections. If a tool is found to be selected, a control layer for the tool is created and activated, and the selection of other tools disabled. While active, all gestures applied on the image are transformed into image adjustment effects based on the selected tool. 
+
+Gesture recognition is implemented using the tuioZones API. There is a zone for handling the image translations alone. Additionally, a zone for each tool is created when the tool is selected. When the tool is deselected, the corresponding gesture tracking zone (tuioZone instance) is destroyed, allowing the base image translation zone to receive gestures again. 
+
+Attempts have been made to keep the function names descriptive and the logic in key functions, such as `draw`, short.
