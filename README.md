@@ -36,7 +36,7 @@ Having a large touch screen makes it natural to use both hands for interaction. 
 
 Inspiration for the adjustments' (Brightness and Contrast) interaction came from physical user interfaces. The rotating motion is similar to using a knob, which are commonly used for adjusting volume, balance and so on in Hi-Fi equipment. In the Western culture, clockwise motion is perceived as going forward, so the adjustment values grow stronger in this direction and weaker in the opposite direction. 
 
-[user interface](imageManipulation/imagemanipulation.png)
+![user interface](imageManipulation/imagemanipulation.png)
 
 ### Application Architecture
 
